@@ -1,18 +1,31 @@
-﻿"""Check the Vortex side: attach, install the openUrl hook, read the prompt, restore."""
-import importlib.util, json, os
+﻿"""Check the Vortex side: attach, hook, read the prompt, restore."""
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-MOD = os.path.join(HERE, "..", "vortex_collection_helper.py")
-spec = importlib.util.spec_from_file_location("vch", MOD)
-m = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(m)
+import json
+from dataclasses import asdict
 
-print("port_open(9222):", m.port_open(9222))
-print("vortex_running():", m.vortex_running())
+from vch.discovery import port_open, vortex_running
+from vch.vortex import VortexBridge
 
-b = m.VortexBridge(9222)
-b.connect()
-print("ensure_hook ->", b.ensure_hook())
-print("prompt ->", json.dumps(b.prompt()))
-print("take_urls ->", b.take_urls())
-print("unhook ->", b.js(m.JS_UNHOOK))
+PORT = 9222
+
+
+def main() -> None:
+    print("port_open(%d):" % PORT, port_open(PORT))
+    print("vortex_running():", vortex_running())
+
+    bridge = VortexBridge(PORT, print)
+    bridge.connect()
+    state = None
+    try:
+        state = bridge.hook()
+        print("hook ->", state.value)
+        assert state.usable, "openUrl hook was not installed"
+        print("prompt ->", json.dumps(asdict(bridge.prompt())))
+        print("take_urls ->", bridge.take_urls())
+    finally:
+        if state is not None and state.usable:
+            print("unhook ->", bridge.unhook())
+
+
+if __name__ == "__main__":
+    main()

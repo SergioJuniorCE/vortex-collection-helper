@@ -1,0 +1,12 @@
+[project]
+name = "vortex-collection-helper"
+version = "0.1.0"
+description = "Automates the free-tier Nexus Mods collection download loop in Vortex."
+requires-python = ">=3.9"
+dependencies = [
+    "playwright>=1.40",
+    "websocket-client>=1.6",
+]
+
+[tool.uv]
+package = false
